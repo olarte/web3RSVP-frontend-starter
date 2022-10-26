@@ -16,7 +16,47 @@ import {
   LinkIcon,
 } from "@heroicons/react/outline";
 
+function checkIfAlreadyRSVPed() {
+  if (account) {
+    for (let i = 0; i < event.rsvps.length; i++) {
+      const thisAccount = account.address.toLowerCase();
+      if (event.rsvps[i].attendee.id.toLowerCase() == thisAccount) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+const newRSVP = async () => {
+  try {
+    const rsvpContract = connectContract();
+    if (rsvpContract) {
+      const txn = await rsvpContract.createNewRSVP(event.id, {
+        value: event.deposit,
+        gasLimit: 300000,
+      });
+      setLoading(true);
+      console.log("Minting...", txn.hash);
+
+      await txn.wait();
+      console.log("Minted -- ", txn.hash);
+      setSuccess(true);
+      setLoading(false);
+      setMessage("Your RSVP has been created successfully.");
+    } else {
+      console.log("Error getting contract.");
+    }
+  } catch (error) {
+    setSuccess(false);
+    setMessage("Error!");
+    setLoading(false);
+    console.log(error);
+  }
+};
+
 function Event({ event }) {
+  console.log("EVENT:", event);
   const { data: account } = useAccount();
 
   const [success, setSuccess] = useState(null);
